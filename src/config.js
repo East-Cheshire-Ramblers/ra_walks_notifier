@@ -50,15 +50,23 @@ function resolveRecipients(config = app, env = process.env) {
 
 const recipients = resolveRecipients(app);
 
-const smtp = {
-  host: process.env.SMTP_HOST,
-  port: Number(process.env.SMTP_PORT || 587),
-  secure: String(process.env.SMTP_SECURE || 'false').toLowerCase() === 'true',
-  user: process.env.SMTP_USER,
-  pass: process.env.SMTP_PASS,
-  from: process.env.MAIL_FROM || process.env.SMTP_USER,
-  to: [...new Set(recipients)]
-};
+function resolveSmtp(config = app, env = process.env) {
+  const configured = config.smtp || {};
+
+  return {
+    host: configured.host || env.SMTP_HOST,
+    port: Number(configured.port || env.SMTP_PORT || 587),
+    secure: typeof configured.secure === 'boolean'
+      ? configured.secure
+      : String(env.SMTP_SECURE || 'false').toLowerCase() === 'true',
+    user: configured.user || env.SMTP_USER,
+    pass: configured.pass || env.SMTP_PASS,
+    from: configured.from || env.MAIL_FROM || configured.user || env.SMTP_USER,
+    to: resolveRecipients(config, env)
+  };
+}
+
+const smtp = resolveSmtp(app);
 
 function validateEmailConfig() {
   const missing = [];
@@ -71,4 +79,4 @@ function validateEmailConfig() {
   }
 }
 
-module.exports = { paths, app, groups, smtp, validateEmailConfig, parseRecipients, resolveRecipients };
+module.exports = { paths, app, groups, smtp, validateEmailConfig, parseRecipients, resolveRecipients, resolveSmtp };

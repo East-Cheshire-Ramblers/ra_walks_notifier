@@ -1,6 +1,6 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
-const { parseRecipients, resolveRecipients } = require('../src/config');
+const { parseRecipients, resolveRecipients, resolveSmtp } = require('../src/config');
 
 test('parseRecipients accepts comma-separated recipient strings', () => {
   assert.deepEqual(
@@ -40,5 +40,41 @@ test('resolveRecipients falls back to env recipients when config is empty', () =
       { MAIL_TO: 'env@example.com, second@example.com' }
     ),
     ['env@example.com', 'second@example.com']
+  );
+});
+
+test('resolveSmtp lets config override env SMTP settings', () => {
+  assert.deepEqual(
+    resolveSmtp(
+      {
+        smtp: {
+          host: 'smtp.config.example',
+          port: 465,
+          secure: true,
+          user: 'config-user',
+          pass: 'config-pass',
+          from: 'Config Sender <sender@example.com>'
+        },
+        notificationRecipients: ['recipient@example.com']
+      },
+      {
+        SMTP_HOST: 'smtp.env.example',
+        SMTP_PORT: '587',
+        SMTP_SECURE: 'false',
+        SMTP_USER: 'env-user',
+        SMTP_PASS: 'env-pass',
+        MAIL_FROM: 'env@example.com',
+        MAIL_TO: 'env-recipient@example.com'
+      }
+    ),
+    {
+      host: 'smtp.config.example',
+      port: 465,
+      secure: true,
+      user: 'config-user',
+      pass: 'config-pass',
+      from: 'Config Sender <sender@example.com>',
+      to: ['recipient@example.com']
+    }
   );
 });

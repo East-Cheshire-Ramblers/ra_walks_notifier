@@ -3,11 +3,12 @@ const { spawn } = require('child_process');
 const path = require('path');
 const fs = require('fs');
 const { formatUkDateTime } = require('./time');
-const { parseRecipients, resolveRecipients } = require('./config');
+const { parseRecipients, resolveRecipients, resolveSmtp } = require('./config');
 
 let tray;
 let timer;
 let recipientsWindow;
+let smtpWindow;
 let lastStatus = 'Starting...';
 const root = path.join(__dirname, '..');
 const reviewUrl = 'https://walks-manager.ramblers.org.uk/walks-manager/list?gid=414&review=1';
@@ -32,6 +33,18 @@ function writeAppConfig(config) {
 
 function currentRecipients() {
   return resolveRecipients(appConfig(), process.env);
+}
+
+function currentSmtp() {
+  const settings = resolveSmtp(appConfig(), process.env);
+  return {
+    host: settings.host || '',
+    port: settings.port || 587,
+    secure: Boolean(settings.secure),
+    user: settings.user || '',
+    pass: settings.pass || '',
+    from: settings.from || ''
+  };
 }
 
 function groupsConfig() {
@@ -96,6 +109,7 @@ function buildStatusText() {
     `Last result: ${s.lastResult || 'None yet'}`,
     `Last email: ${formatUkDateTime(s.lastEmailAt)}`,
     `Recipients: ${currentRecipients().length ? currentRecipients().join(', ') : 'None configured'}`,
+    `SMTP: ${currentSmtp().host || 'Not configured'}`,
     `Last error: ${s.lastError || 'None'}`,
     '',
     `Session: ${fs.existsSync(sessionFile()) ? 'Present' : 'Missing'}`,
@@ -150,6 +164,31 @@ function showRecipientsWindow() {
   recipientsWindow.loadFile(path.join(root, 'src', 'recipients.html'));
 }
 
+function showSmtpWindow() {
+  if (smtpWindow) {
+    smtpWindow.focus();
+    return;
+  }
+
+  smtpWindow = new BrowserWindow({
+    width: 520,
+    height: 460,
+    title: 'SMTP Settings',
+    resizable: false,
+    minimizable: false,
+    fullscreenable: false,
+    webPreferences: {
+      preload: path.join(__dirname, 'smtpPreload.js')
+    }
+  });
+
+  smtpWindow.on('closed', () => {
+    smtpWindow = null;
+  });
+
+  smtpWindow.loadFile(path.join(root, 'src', 'smtp.html'));
+}
+
 async function checkNow(force = false) {
   lastStatus = 'Checking...';
   buildMenu();
@@ -171,6 +210,7 @@ function buildMenu() {
     { label: 'Check Now', click: () => checkNow(false) },
     { label: 'Force Test Email', click: () => checkNow(true) },
     { label: 'Manage Recipients', click: () => showRecipientsWindow() },
+    { label: 'SMTP Settings', click: () => showSmtpWindow() },
     { label: 'Send Test Email', click: () => runNode(['src/testEmail.js'], true) },
     { label: 'Login to Walks Manager', click: () => runNode(['src/login.js'], true) },
     { label: 'Open Review List', click: () => shell.openExternal(reviewUrl) },
@@ -205,6 +245,21 @@ ipcMain.handle('recipients:save', (_event, text) => {
   writeAppConfig(cfg);
   buildMenu();
   return recipients;
+});
+ipcMain.handle('smtp:load', () => currentSmtp());
+ipcMain.handle('smtp:save', (_event, settings) => {
+  const cfg = appConfig();
+  cfg.smtp = {
+    host: String(settings.host || '').trim(),
+    port: Number(settings.port || 587),
+    secure: Boolean(settings.secure),
+    user: String(settings.user || '').trim(),
+    pass: String(settings.pass || ''),
+    from: String(settings.from || '').trim()
+  };
+  writeAppConfig(cfg);
+  buildMenu();
+  return currentSmtp();
 });
 app.on('before-quit', () => { if (timer) clearInterval(timer); });
 app.on('window-all-closed', (e) => e.preventDefault());
