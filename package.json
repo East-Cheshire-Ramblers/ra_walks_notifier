@@ -44,6 +44,7 @@
       ".env.example",
       "package.json"
     ],
+    "npmRebuild": false,
     "mac": {
       "category": "public.app-category.productivity",
       "target": [
