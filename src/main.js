@@ -19,7 +19,7 @@ function readJson(file, fallback = {}) {
 }
 
 function appConfig() {
-  return readJson(path.join(root, 'config.json'), { checkIntervalMinutes: 15, activeHours: { start: 7, end: 22 } });
+  return readJson(path.join(root, 'config.json'), { checkIntervalMinutes: 5, activeHours: { start: 7, end: 22 } });
 }
 
 function groupsConfig() {
@@ -77,7 +77,7 @@ function buildStatusText() {
     `Status: ${running}`,
     `Pending walks: ${pending}`,
     `Groups: ${groups.length}`,
-    `Schedule: Every ${cfg.checkIntervalMinutes || 15} minutes`,
+    `Schedule: Every ${cfg.checkIntervalMinutes || 5} minutes`,
     cfg.activeHours ? `Active hours: ${cfg.activeHours.start}:00 to ${cfg.activeHours.end}:00` : null,
     '',
     `Last check: ${formatUkDateTime(s.lastCheckCompletedAt)}`,
@@ -144,7 +144,7 @@ function buildMenu() {
 
 function startScheduler() {
   const cfg = appConfig();
-  const intervalMinutes = cfg.checkIntervalMinutes || 15;
+  const intervalMinutes = cfg.checkIntervalMinutes || 5;
   timer = setInterval(() => checkNow(false), intervalMinutes * 60 * 1000);
   checkNow(false);
 }

@@ -12,7 +12,7 @@ console.log('Walks Manager Watch');
 console.log('Version          3.0');
 console.log('Status           ' + (isLoaded ? 'Loaded/running ✅' : 'Not loaded ❌'));
 console.log('Groups           ' + groups.length);
-console.log('Schedule         Every ' + (app.checkIntervalMinutes || 15) + ' minutes');
+console.log('Schedule         Every ' + (app.checkIntervalMinutes || 5) + ' minutes');
 if (app.activeHours) console.log('Active hours     ' + app.activeHours.start + ':00 to ' + app.activeHours.end + ':00');
 console.log('Pending walks    ' + (s.pendingWalks ?? state.walks.length ?? 0));
 console.log('Last check       ' + formatUkDateTime(s.lastCheckCompletedAt));

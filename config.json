@@ -1,5 +1,5 @@
 {
-  "checkIntervalMinutes": 15,
+  "checkIntervalMinutes": 5,
   "activeHours": {
     "start": 7,
     "end": 22
