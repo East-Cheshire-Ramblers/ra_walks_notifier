@@ -7,7 +7,9 @@ function plural(count, singular, pluralWord = `${singular}s`) {
 }
 
 function summaryParts(newWalks, changedWalks, clearedWalks, currentWalks) {
-  const alreadyNotified = Math.max(0, currentWalks.length - newWalks.length - changedWalks.length);
+  const alreadyNotified = newWalks.length || changedWalks.length
+    ? Math.max(0, currentWalks.length - newWalks.length - changedWalks.length)
+    : 0;
   const parts = [];
 
   if (newWalks.length) parts.push(plural(newWalks.length, 'new walk'));

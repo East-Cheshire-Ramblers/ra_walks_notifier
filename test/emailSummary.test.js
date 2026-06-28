@@ -22,6 +22,12 @@ test('email html uses the clearer lead sentence', () => {
   assert.doesNotMatch(html, /2 current pending/);
 });
 
+test('cleared-only emails do not describe remaining walks as already notified', () => {
+  const lead = buildLeadSentence([], [], [walk('Deleted walk')], [walk('Old walk')]);
+
+  assert.equal(lead, 'Walks Manager Watch found 1 cleared walk.');
+});
+
 function walk(title) {
   return {
     title,

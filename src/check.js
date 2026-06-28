@@ -50,7 +50,7 @@ async function notifyMac(title, message) {
     const changedWalks = currentWalks.filter(w => prevMap[w.id] && !sameWalk(w, prevMap[w.id]));
     const clearedWalks = (prev.walks || []).filter(w => !currentMap[w.id]);
     log(`Summary: ${currentWalks.length} current, ${newWalks.length} new, ${changedWalks.length} changed, ${clearedWalks.length} cleared.`);
-    const shouldEmail = forceEmail || (app.notifyOnNew !== false && newWalks.length) || (app.notifyOnChanged !== false && changedWalks.length) || (app.notifyOnCleared !== false && clearedWalks.length);
+    const shouldEmail = forceEmail || (app.notifyOnNew !== false && newWalks.length) || (app.notifyOnChanged !== false && changedWalks.length);
     if (shouldEmail) {
       const total = newWalks.length + changedWalks.length + clearedWalks.length;
       const subject = total === 1 ? 'Walks Manager Watch: 1 change' : `Walks Manager Watch: ${total} changes`;
