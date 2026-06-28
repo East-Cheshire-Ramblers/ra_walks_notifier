@@ -466,7 +466,7 @@ async function runElectronCheck(force = false) {
     const cfg = appConfig();
     const shouldEmail = force || (cfg.notifyOnNew !== false && newWalks.length) || (cfg.notifyOnChanged !== false && changedWalks.length);
     if (shouldEmail) {
-      const total = newWalks.length + changedWalks.length + clearedWalks.length;
+      const total = newWalks.length + changedWalks.length;
       const subject = total === 1 ? 'Walks Manager Watch: 1 change' : `Walks Manager Watch: ${total} changes`;
       const { text, html } = buildEmail(newWalks, changedWalks, clearedWalks, currentWalks);
       await sendEmail(subject, text, html);

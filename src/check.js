@@ -60,7 +60,7 @@ async function notifyMac(title, message) {
     log(`Summary: ${currentWalks.length} current, ${newWalks.length} new, ${changedWalks.length} changed, ${clearedWalks.length} cleared.`);
     const shouldEmail = forceEmail || (app.notifyOnNew !== false && newWalks.length) || (app.notifyOnChanged !== false && changedWalks.length);
     if (shouldEmail) {
-      const total = newWalks.length + changedWalks.length + clearedWalks.length;
+      const total = newWalks.length + changedWalks.length;
       const subject = total === 1 ? 'Walks Manager Watch: 1 change' : `Walks Manager Watch: ${total} changes`;
       const { text, html } = buildEmail(newWalks, changedWalks, clearedWalks, currentWalks);
       await sendEmail(subject, text, html);
