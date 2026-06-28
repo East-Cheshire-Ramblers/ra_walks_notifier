@@ -11,7 +11,7 @@ async function sendEmail(subject, text, html) {
   });
   await transporter.sendMail({
     from: smtp.from,
-    to: smtp.to,
+    to: smtp.to.join(', '),
     subject,
     text,
     html

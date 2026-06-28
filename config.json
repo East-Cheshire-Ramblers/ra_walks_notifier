@@ -8,5 +8,6 @@
   "notifyOnCleared": false,
   "notifyOnChanged": true,
   "notifyOnNew": true,
-  "macNotifications": true
+  "macNotifications": true,
+  "notificationRecipients": []
 }

@@ -28,6 +28,19 @@ function readJson(file, fallback) {
 const app = readJson(paths.configFile, {});
 const groups = readJson(paths.groupsFile, [{ name: 'East Cheshire Group', gid: 414 }]);
 
+function parseRecipients(value) {
+  if (Array.isArray(value)) {
+    return value.flatMap(parseRecipients);
+  }
+
+  return String(value || '')
+    .split(',')
+    .map(email => email.trim())
+    .filter(Boolean);
+}
+
+const recipients = parseRecipients(app.notificationRecipients).concat(parseRecipients(process.env.MAIL_TO || process.env.NOTIFY_TO));
+
 const smtp = {
   host: process.env.SMTP_HOST,
   port: Number(process.env.SMTP_PORT || 587),
@@ -35,17 +48,18 @@ const smtp = {
   user: process.env.SMTP_USER,
   pass: process.env.SMTP_PASS,
   from: process.env.MAIL_FROM || process.env.SMTP_USER,
-  to: process.env.MAIL_TO || process.env.NOTIFY_TO
+  to: [...new Set(recipients)]
 };
 
 function validateEmailConfig() {
   const missing = [];
-  for (const key of ['host', 'port', 'user', 'pass', 'to']) {
+  for (const key of ['host', 'port', 'user', 'pass']) {
     if (!smtp[key]) missing.push(key);
   }
+  if (!smtp.to.length) missing.push('to');
   if (missing.length) {
     throw new Error(`Missing email configuration: ${missing.join(', ')}. Check your .env file.`);
   }
 }
 
-module.exports = { paths, app, groups, smtp, validateEmailConfig };
+module.exports = { paths, app, groups, smtp, validateEmailConfig, parseRecipients };

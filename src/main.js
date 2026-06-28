@@ -3,6 +3,7 @@ const { spawn } = require('child_process');
 const path = require('path');
 const fs = require('fs');
 const { formatUkDateTime } = require('./time');
+const { smtp } = require('./config');
 
 let tray;
 let timer;
@@ -83,6 +84,7 @@ function buildStatusText() {
     `Last check: ${formatUkDateTime(s.lastCheckCompletedAt)}`,
     `Last result: ${s.lastResult || 'None yet'}`,
     `Last email: ${formatUkDateTime(s.lastEmailAt)}`,
+    `Recipients: ${smtp.to.length ? smtp.to.join(', ') : 'None configured'}`,
     `Last error: ${s.lastError || 'None'}`,
     '',
     `Session: ${fs.existsSync(sessionFile()) ? 'Present' : 'Missing'}`,
