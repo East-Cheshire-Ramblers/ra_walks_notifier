@@ -151,6 +151,7 @@ function buildStatusText() {
     `Last error: ${s.lastError || 'None'}`,
     '',
     `Session: ${fs.existsSync(sessionFile()) ? 'Present' : 'Missing'}`,
+    `Logo: ${logoPath() || 'Not configured'}`,
     `Settings folder: ${path.dirname(configFilePath())}`,
     `Log file: ${logFile()}`
   ].filter(Boolean).join('\n');
@@ -191,14 +192,16 @@ function trayIcon() {
   if (image.isEmpty()) {
     return nativeImage.createFromPath(path.join(root, 'assets', 'trayTemplate.png'));
   }
-  return image.resize({ width: 18, height: 18 });
+  const resized = image.resize({ width: 18, height: 18 });
+  resized.setTemplateImage(false);
+  return resized;
 }
 
 function updateTrayIcon() {
   if (tray) tray.setImage(trayIcon());
 }
 
-async function chooseBrandLogo() {
+async function chooseBrandLogo(showConfirmation = true) {
   const result = await dialog.showOpenDialog({
     title: 'Choose Ramblers Logo',
     properties: ['openFile'],
@@ -212,6 +215,28 @@ async function chooseBrandLogo() {
   writeAppConfig(cfg);
   updateTrayIcon();
   buildMenu();
+  if (showConfirmation) {
+    dialog.showMessageBox({
+      type: 'info',
+      title: 'Walks Manager Watch',
+      message: 'Logo updated.',
+      detail: storedLogo
+    });
+  }
+  return setupState();
+}
+
+async function resetBrandLogo() {
+  const cfg = appConfig();
+  delete cfg.branding;
+  writeAppConfig(cfg);
+  updateTrayIcon();
+  buildMenu();
+  dialog.showMessageBox({
+    type: 'info',
+    title: 'Walks Manager Watch',
+    message: 'Logo reset to the built-in Ramblers logo.'
+  });
   return setupState();
 }
 
@@ -573,6 +598,7 @@ function buildMenu() {
     { label: 'Manage Recipients', click: () => showRecipientsWindow() },
     { label: 'SMTP Settings', click: () => showSmtpWindow() },
     { label: 'Change Logo', click: () => chooseBrandLogo() },
+    { label: 'Reset Logo', click: () => resetBrandLogo() },
     { label: 'Send Test Email', click: () => runNode(['src/testEmail.js'], true) },
     { label: 'Login to Walks Manager', click: () => openWalksManagerLoginWindow().then(result => {
       dialog.showMessageBox({
@@ -633,7 +659,7 @@ ipcMain.handle('smtp:save', (_event, settings) => {
   return currentSmtp();
 });
 ipcMain.handle('setup:load', () => setupState());
-ipcMain.handle('setup:choose-logo', () => chooseBrandLogo());
+ipcMain.handle('setup:choose-logo', () => chooseBrandLogo(false));
 ipcMain.handle('setup:save', (_event, settings) => {
   const cfg = appConfig();
   cfg.notificationRecipients = parseRecipients(settings.recipients);
