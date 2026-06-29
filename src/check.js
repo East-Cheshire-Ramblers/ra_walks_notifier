@@ -37,6 +37,15 @@ async function notifyMac(title, message) {
     writeJson(paths.statusFile, status);
     return;
   }
+  if (!groups.length) {
+    const message = 'No Walks Manager group is configured. Open Setup and select a group.';
+    log(message);
+    status.lastError = message;
+    status.lastCheckCompletedAt = nowUkDateTime();
+    status.lastResult = 'Setup required: Walks Manager group missing';
+    writeJson(paths.statusFile, status);
+    return;
+  }
   const prev = readJson(paths.stateFile, { walks: [] });
   const browser = await chromium.launch({ headless: true });
   const context = await browser.newContext({ storageState: paths.sessionFile });

@@ -92,12 +92,11 @@ test('resolveGroups uses configured group selection before fallback groups', () 
   );
 });
 
-test('resolveGroups falls back when no group has been selected', () => {
+test('resolveGroups returns no groups when no group has been selected', () => {
   assert.deepEqual(
     resolveGroups(
-      { groups: [] },
-      [{ name: 'East Cheshire Group', gid: 414 }]
+      { groups: [] }
     ),
-    [{ name: 'East Cheshire Group', gid: 414 }]
+    []
   );
 });

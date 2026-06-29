@@ -84,8 +84,7 @@ function setupState() {
 }
 
 function groupsConfig() {
-  const { paths } = require('./config');
-  return resolveGroups(appConfig(), readJson(paths.groupsFile, []));
+  return resolveGroups(appConfig(), []);
 }
 
 function statusFile() { const { paths } = require('./config'); return paths.statusFile; }
@@ -200,10 +199,11 @@ function configFilePath() {
 }
 
 function selectedGroup() {
-  return groupsConfig()[0] || { name: 'East Cheshire Group', gid: 414 };
+  return groupsConfig()[0] || null;
 }
 
 function reviewUrlForGroup(group = selectedGroup()) {
+  if (!group) return 'https://walks-manager.ramblers.org.uk/walks-manager/list?review=1';
   return `https://walks-manager.ramblers.org.uk/walks-manager/list?gid=${encodeURIComponent(group.gid)}&review=1`;
 }
 
@@ -778,7 +778,7 @@ async function loginWithWalksManagerCredentials(username, password) {
 }
 
 async function checkNow(force = false) {
-  if (!setupState().complete && !force) {
+  if (!setupState().complete) {
     lastStatus = 'Setup required';
     buildMenu();
     showSetupWindow();

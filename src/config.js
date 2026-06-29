@@ -32,7 +32,6 @@ function readJson(file, fallback) {
 }
 
 const app = readJson(paths.configFile, readJson(paths.rootConfigFile, {}));
-const fallbackGroups = readJson(paths.groupsFile, [{ name: 'East Cheshire Group', gid: 414 }]);
 
 function normalizeGroups(value) {
   const input = Array.isArray(value) ? value : [];
@@ -44,12 +43,12 @@ function normalizeGroups(value) {
     .filter(group => group.name && Number.isFinite(group.gid));
 }
 
-function resolveGroups(config = app, fallback = fallbackGroups) {
+function resolveGroups(config = app, fallback = []) {
   const configured = normalizeGroups(config.groups);
   return configured.length ? configured : normalizeGroups(fallback);
 }
 
-const groups = resolveGroups(app, fallbackGroups);
+const groups = resolveGroups(app, []);
 
 function parseRecipients(value) {
   if (Array.isArray(value)) {
