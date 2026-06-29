@@ -97,6 +97,9 @@
   <label for="pass">Password</label>
   <input id="pass" type="password" autocomplete="current-password">
 
+  <label for="fromName">From name</label>
+  <input id="fromName" autocomplete="organization">
+
   <label for="from">From address</label>
   <input id="from" autocomplete="email">
 
@@ -112,6 +115,7 @@
       secure: document.getElementById('secure'),
       user: document.getElementById('user'),
       pass: document.getElementById('pass'),
+      fromName: document.getElementById('fromName'),
       from: document.getElementById('from')
     };
 
@@ -121,6 +125,7 @@
       fields.secure.checked = Boolean(settings.secure);
       fields.user.value = settings.user || '';
       fields.pass.value = settings.pass || '';
+      fields.fromName.value = settings.fromName || '';
       fields.from.value = settings.from || '';
     });
 
@@ -131,6 +136,7 @@
         secure: fields.secure.checked,
         user: fields.user.value,
         pass: fields.pass.value,
+        fromName: fields.fromName.value,
         from: fields.from.value
       });
       window.close();

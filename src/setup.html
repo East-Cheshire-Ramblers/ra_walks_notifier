@@ -150,6 +150,9 @@
   <label for="pass">Password</label>
   <input id="pass" type="password" autocomplete="current-password">
 
+  <label for="fromName">From name</label>
+  <input id="fromName" autocomplete="organization">
+
   <label for="from">From address</label>
   <input id="from" autocomplete="email">
 
@@ -171,6 +174,7 @@
       secure: document.getElementById('secure'),
       user: document.getElementById('user'),
       pass: document.getElementById('pass'),
+      fromName: document.getElementById('fromName'),
       from: document.getElementById('from')
     };
     const session = document.getElementById('session');
@@ -185,6 +189,7 @@
       fields.secure.checked = Boolean(state.smtp.secure);
       fields.user.value = state.smtp.user || '';
       fields.pass.value = state.smtp.pass || '';
+      fields.fromName.value = state.smtp.fromName || '';
       fields.from.value = state.smtp.from || '';
       if (state.branding && state.branding.logoDataUrl) {
         logo.src = state.branding.logoDataUrl;
@@ -207,6 +212,7 @@
           secure: fields.secure.checked,
           user: fields.user.value,
           pass: fields.pass.value,
+          fromName: fields.fromName.value,
           from: fields.from.value
         }
       };

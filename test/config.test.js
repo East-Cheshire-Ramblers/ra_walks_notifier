@@ -53,7 +53,8 @@ test('resolveSmtp lets config override env SMTP settings', () => {
           secure: true,
           user: 'config-user',
           pass: 'config-pass',
-          from: 'Config Sender <sender@example.com>'
+          fromName: 'Config Sender',
+          from: 'sender@example.com'
         },
         notificationRecipients: ['recipient@example.com']
       },
@@ -63,6 +64,7 @@ test('resolveSmtp lets config override env SMTP settings', () => {
         SMTP_SECURE: 'false',
         SMTP_USER: 'env-user',
         SMTP_PASS: 'env-pass',
+        MAIL_FROM_NAME: 'Env Sender',
         MAIL_FROM: 'env@example.com',
         MAIL_TO: 'env-recipient@example.com'
       }
@@ -73,7 +75,8 @@ test('resolveSmtp lets config override env SMTP settings', () => {
       secure: true,
       user: 'config-user',
       pass: 'config-pass',
-      from: 'Config Sender <sender@example.com>',
+      fromName: 'Config Sender',
+      from: 'sender@example.com',
       to: ['recipient@example.com']
     }
   );

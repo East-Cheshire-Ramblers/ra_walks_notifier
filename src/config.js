@@ -67,6 +67,7 @@ function resolveSmtp(config = app, env = process.env) {
       : String(env.SMTP_SECURE || 'false').toLowerCase() === 'true',
     user: configured.user || env.SMTP_USER,
     pass: configured.pass || env.SMTP_PASS,
+    fromName: configured.fromName || env.MAIL_FROM_NAME || env.SMTP_FROM_NAME || '',
     from: configured.from || env.MAIL_FROM || configured.user || env.SMTP_USER,
     to: resolveRecipients(config, env)
   };

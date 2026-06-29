@@ -1,4 +1,5 @@
 const { app, Tray, Menu, shell, dialog, Notification, BrowserWindow, ipcMain, nativeImage, session: electronSession } = require('electron');
+const { autoUpdater } = require('electron-updater');
 const { spawn } = require('child_process');
 const path = require('path');
 const fs = require('fs');
@@ -18,6 +19,8 @@ let smtpWindow;
 let setupWindow;
 let loginWindow;
 let lastStatus = 'Starting...';
+let manualUpdateCheck = false;
+let updateHandlersConfigured = false;
 const root = path.join(__dirname, '..');
 const reviewUrl = 'https://walks-manager.ramblers.org.uk/walks-manager/list?gid=414&review=1';
 const repoUrl = 'https://github.com/East-Cheshire-Ramblers/ra_walks_notifier';
@@ -54,6 +57,7 @@ function currentSmtp() {
     secure: Boolean(settings.secure),
     user: settings.user || '',
     pass: settings.pass || '',
+    fromName: settings.fromName || '',
     from: settings.from || ''
   };
 }
@@ -307,6 +311,112 @@ function showAbout() {
   });
 }
 
+function startAtBootEnabled() {
+  return app.getLoginItemSettings().openAtLogin;
+}
+
+function toggleStartAtBoot() {
+  const enabled = !startAtBootEnabled();
+  app.setLoginItemSettings({
+    openAtLogin: enabled,
+    openAsHidden: true,
+    path: process.execPath
+  });
+  buildMenu();
+}
+
+function configureUpdates() {
+  if (updateHandlersConfigured) return;
+  updateHandlersConfigured = true;
+  autoUpdater.autoDownload = false;
+  autoUpdater.autoInstallOnAppQuit = true;
+
+  autoUpdater.on('checking-for-update', () => {
+    lastStatus = 'Checking for updates...';
+    buildMenu();
+  });
+
+  autoUpdater.on('update-not-available', () => {
+    lastStatus = 'No update available';
+    buildMenu();
+    if (manualUpdateCheck) {
+      dialog.showMessageBox({
+        type: 'info',
+        title: 'Walks Manager Watch',
+        message: 'Walks Manager Watch is up to date.'
+      });
+    }
+    manualUpdateCheck = false;
+  });
+
+  autoUpdater.on('update-available', (info) => {
+    manualUpdateCheck = false;
+    dialog.showMessageBox({
+      type: 'info',
+      title: 'Walks Manager Watch Update',
+      message: `Version ${info.version} is available.`,
+      detail: 'Download it now and install when ready?',
+      buttons: ['Download', 'Later'],
+      defaultId: 0,
+      cancelId: 1
+    }).then(result => {
+      if (result.response === 0) {
+        lastStatus = 'Downloading update...';
+        buildMenu();
+        autoUpdater.downloadUpdate();
+      }
+    });
+  });
+
+  autoUpdater.on('update-downloaded', (info) => {
+    lastStatus = `Update ${info.version} ready`;
+    buildMenu();
+    dialog.showMessageBox({
+      type: 'info',
+      title: 'Walks Manager Watch Update',
+      message: `Version ${info.version} has been downloaded.`,
+      detail: 'Install it now? The app will restart.',
+      buttons: ['Install and Restart', 'Later'],
+      defaultId: 0,
+      cancelId: 1
+    }).then(result => {
+      if (result.response === 0) autoUpdater.quitAndInstall();
+    });
+  });
+
+  autoUpdater.on('error', (error) => {
+    lastStatus = 'Update check failed';
+    buildMenu();
+    if (manualUpdateCheck) {
+      dialog.showMessageBox({
+        type: 'error',
+        title: 'Walks Manager Watch Update',
+        message: 'Update check failed.',
+        detail: error.stack || error.message
+      });
+    }
+    manualUpdateCheck = false;
+    log(`Update error: ${error.stack || error.message}`);
+  });
+}
+
+function checkForUpdates(manual = true) {
+  configureUpdates();
+  manualUpdateCheck = manual;
+  if (!app.isPackaged) {
+    if (manual) {
+      dialog.showMessageBox({
+        type: 'info',
+        title: 'Walks Manager Watch Update',
+        message: 'Update checks are available in the installed app.'
+      });
+    }
+    manualUpdateCheck = false;
+    return;
+  }
+  autoUpdater.checkForUpdates();
+}
+
 function showRecipientsWindow() {
   if (recipientsWindow) {
     recipientsWindow.focus();
@@ -340,7 +450,7 @@ function showSmtpWindow() {
 
   smtpWindow = new BrowserWindow({
     width: 520,
-    height: 460,
+    height: 520,
     title: 'SMTP Settings',
     resizable: false,
     minimizable: false,
@@ -365,7 +475,7 @@ function showSetupWindow() {
 
   setupWindow = new BrowserWindow({
     width: 640,
-    height: 740,
+    height: 790,
     title: 'Walks Manager Watch Setup',
     resizable: false,
     minimizable: false,
@@ -656,6 +766,7 @@ function buildMenu() {
   const s = readStatus();
   const lastCheck = formatUkDateTime(s.lastCheckCompletedAt);
   const setup = setupState();
+  const bootEnabled = startAtBootEnabled();
   const menu = Menu.buildFromTemplate([
     { label: `Status: ${lastStatus}`, enabled: false },
     { label: `Last check: ${lastCheck}`, enabled: false },
@@ -663,6 +774,13 @@ function buildMenu() {
     setup.complete
       ? { label: 'Configured', enabled: false }
       : { label: 'Setup', click: () => showSetupWindow() },
+    {
+      label: setup.complete ? 'Start at Boot' : 'Start at Boot (complete setup first)',
+      type: 'checkbox',
+      checked: setup.complete && bootEnabled,
+      enabled: setup.complete,
+      click: () => toggleStartAtBoot()
+    },
     { label: 'Show Status', click: () => showStatus() },
     { label: 'Check Now', click: () => checkNow(false) },
     { label: 'Send Walks Report Email', click: () => checkNow(true) },
@@ -678,6 +796,7 @@ function buildMenu() {
     { label: 'Open Review List', click: () => shell.openExternal(reviewUrl) },
     { type: 'separator' },
     { label: 'Send SMTP Test Email', click: () => sendSmtpTestEmail(true) },
+    { label: 'Check for Updates', click: () => checkForUpdates(true) },
     { label: 'Change Logo', click: () => chooseBrandLogo() },
     { label: 'Reset Logo', click: () => resetBrandLogo() },
     { label: 'About', click: () => showAbout() },
@@ -702,6 +821,7 @@ function refreshScheduler() {
 
 app.whenReady().then(() => {
   if (app.dock) app.dock.hide();
+  configureUpdates();
 
   tray = new Tray(trayIcon());
   tray.setToolTip('Walks Manager Watch');
@@ -709,6 +829,8 @@ app.whenReady().then(() => {
   startScheduler();
   if (!setupState().complete) {
     showSetupWindow();
+  } else {
+    setTimeout(() => checkForUpdates(false), 10000);
   }
 });
 ipcMain.handle('recipients:load', () => currentRecipients());
@@ -729,6 +851,7 @@ ipcMain.handle('smtp:save', (_event, settings) => {
     secure: Boolean(settings.secure),
     user: String(settings.user || '').trim(),
     pass: String(settings.pass || ''),
+    fromName: String(settings.fromName || '').trim(),
     from: String(settings.from || '').trim()
   };
   writeAppConfig(cfg);
@@ -746,6 +869,7 @@ ipcMain.handle('setup:save', (_event, settings) => {
     secure: Boolean(settings.smtp?.secure),
     user: String(settings.smtp?.user || '').trim(),
     pass: String(settings.smtp?.pass || ''),
+    fromName: String(settings.smtp?.fromName || '').trim(),
     from: String(settings.smtp?.from || '').trim()
   };
   writeAppConfig(cfg);

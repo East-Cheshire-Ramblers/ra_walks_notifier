@@ -27,6 +27,13 @@ function validateEmailConfig(settings) {
   }
 }
 
+function formatFromAddress(name, address) {
+  const trimmedName = String(name || '').trim();
+  const trimmedAddress = String(address || '').trim();
+  if (!trimmedName || /^.+<.+>$/.test(trimmedAddress)) return trimmedAddress;
+  return `"${trimmedName.replace(/"/g, '\\"')}" <${trimmedAddress}>`;
+}
+
 async function sendEmail(subject, text, html) {
   const smtp = emailSettings();
   validateEmailConfig(smtp);
@@ -38,7 +45,7 @@ async function sendEmail(subject, text, html) {
     auth: { user: smtp.user, pass: smtp.pass }
   });
   const message = {
-    from: smtp.from,
+    from: formatFromAddress(smtp.fromName, smtp.from),
     to: smtp.to.join(', '),
     subject,
     text,
@@ -56,4 +63,4 @@ async function sendEmail(subject, text, html) {
   await transporter.sendMail(message);
 }
 
-module.exports = { sendEmail };
+module.exports = { sendEmail, formatFromAddress };

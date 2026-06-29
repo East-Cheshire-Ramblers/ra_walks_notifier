@@ -1,6 +1,6 @@
 {
   "name": "walks-manager-watch",
-  "version": "4.3.0",
+  "version": "4.3.1",
   "description": "Menu bar app for monitoring Ramblers Walks Manager review queues",
   "main": "src/main.js",
   "author": "Richard Higham",
@@ -23,6 +23,7 @@
   "dependencies": {
     "dotenv": "^16.4.7",
     "electron-store": "^8.2.0",
+    "electron-updater": "^6.8.9",
     "nodemailer": "^6.9.16",
     "playwright": "^1.49.1"
   },
@@ -82,6 +83,13 @@
           "path": "/Applications"
         }
       ]
-    }
+    },
+    "publish": [
+      {
+        "provider": "github",
+        "owner": "East-Cheshire-Ramblers",
+        "repo": "ra_walks_notifier"
+      }
+    ]
   }
 }
