@@ -19,6 +19,7 @@
     "build:linux": "electron-builder --linux AppImage deb rpm --x64 --publish never",
     "build:linux:release": "electron-builder --linux AppImage deb rpm --x64",
     "release:mac": "npm run build:mac:signed && npm run notary:submit",
+    "release:mac:clean": "bash scripts/build-mac-release-clean.sh",
     "clean:mac:xattrs": "xattr -cr node_modules/electron/dist node_modules build assets src package.json 2>/dev/null || true",
     "notary:store": "xcrun notarytool store-credentials WalksManagerWatchNotary --apple-id YOUR_APPLE_ID --team-id 9PG75A2TYV --password YOUR_APP_SPECIFIC_PASSWORD",
     "notary:submit": "bash scripts/notarize-latest.sh"
