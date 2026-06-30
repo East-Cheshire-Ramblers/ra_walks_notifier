@@ -6,6 +6,7 @@ const {
   shouldSendSubmitted,
   shouldSendPublished,
   lookupLeaderEmail,
+  testLeaderEmailApi,
   isAllowedTestLeaderEmail
 } = require('../src/leaderEmail');
 
@@ -97,6 +98,43 @@ test('lookupLeaderEmail refuses ambiguous matches', async () => {
     assert.deepEqual(
       await lookupLeaderEmail('Richard Higham', { apiBaseUrl: 'https://example.org/api/index.php/v1', apiToken: 'token' }),
       { email: '', reason: '2 matching leader profiles' }
+    );
+  } finally {
+    global.fetch = originalFetch;
+  }
+});
+
+test('testLeaderEmailApi reports missing API settings clearly', async () => {
+  assert.deepEqual(
+    await testLeaderEmailApi({ apiBaseUrl: '', apiToken: '' }),
+    { ok: false, message: 'Enter the Joomla API URL and token first.' }
+  );
+});
+
+test('testLeaderEmailApi confirms a resolved profile', async () => {
+  const originalFetch = global.fetch;
+  global.fetch = async () => ({
+    ok: true,
+    async json() {
+      return {
+        data: [
+          {
+            type: 'profiles',
+            id: '8',
+            attributes: {
+              preferred_name: 'Richard Higham',
+              email: 'me@example.org'
+            }
+          }
+        ]
+      };
+    }
+  });
+
+  try {
+    assert.deepEqual(
+      await testLeaderEmailApi({ apiBaseUrl: 'https://example.org/api/index.php/v1', apiToken: 'token' }),
+      { ok: true, message: 'API connected. Found Richard Higham <me@example.org>.' }
     );
   } finally {
     global.fetch = originalFetch;

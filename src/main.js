@@ -10,7 +10,7 @@ const { parseWalkEntries } = require('./parser');
 const { buildEmail } = require('./emailSummary');
 const { sendEmail } = require('./email');
 const { leaderDetailsScript } = require('./leaderDetails');
-const { normalizeLeaderEmailSettings, sendLeaderEmails } = require('./leaderEmail');
+const { normalizeLeaderEmailSettings, sendLeaderEmails, testLeaderEmailApi } = require('./leaderEmail');
 const { log, ensureDirs } = require('./logger');
 const { copyLogo, logoDataUrl, logoPath } = require('./branding');
 const { isLoginPage, sendSessionExpiredEmail } = require('./sessionExpiry');
@@ -1373,6 +1373,7 @@ ipcMain.handle('leader-email:save', (_event, settings) => {
   buildMenu();
   return currentLeaderEmailSettings();
 });
+ipcMain.handle('leader-email:test-api', (_event, settings) => testLeaderEmailApi(settings, 'Richard Higham'));
 ipcMain.handle('logs:load', () => readLogLines());
 ipcMain.handle('setup:load', () => setupState());
 ipcMain.handle('setup:choose-logo', () => chooseBrandLogo(false));

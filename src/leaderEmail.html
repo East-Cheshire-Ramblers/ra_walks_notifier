@@ -54,6 +54,22 @@
       line-height: 1.4;
     }
 
+    .message {
+      min-height: 18px;
+      margin: 10px 0 0;
+      font-size: 12px;
+      line-height: 1.4;
+      color: #52606d;
+    }
+
+    .message.ok {
+      color: #1f7a3f;
+    }
+
+    .message.error {
+      color: #b42318;
+    }
+
     .actions {
       display: flex;
       justify-content: flex-end;
@@ -104,7 +120,10 @@
     The API token is used to look up the walk leader's email address from RA Mailman. If more than one matching profile is found, the app will skip the leader email rather than guess.
   </div>
 
+  <div id="message" class="message"></div>
+
   <div class="actions">
+    <button id="testApi">Test API</button>
     <button id="cancel">Cancel</button>
     <button id="save" class="primary">Save</button>
   </div>
@@ -117,6 +136,22 @@
       apiBaseUrl: document.getElementById('apiBaseUrl'),
       apiToken: document.getElementById('apiToken')
     };
+    const message = document.getElementById('message');
+
+    function currentSettings() {
+      return {
+        enabled: fields.enabled.checked,
+        sendOnSubmit: fields.sendOnSubmit.checked,
+        sendOnPublish: fields.sendOnPublish.checked,
+        apiBaseUrl: fields.apiBaseUrl.value,
+        apiToken: fields.apiToken.value
+      };
+    }
+
+    function setMessage(text, kind) {
+      message.textContent = text || '';
+      message.className = `message ${kind || ''}`;
+    }
 
     window.leaderEmailSettings.load().then((settings) => {
       fields.enabled.checked = settings.enabled !== false;
@@ -126,14 +161,22 @@
       fields.apiToken.value = settings.apiToken || '';
     });
 
+    document.getElementById('testApi').addEventListener('click', async () => {
+      const button = document.getElementById('testApi');
+      button.disabled = true;
+      setMessage('Testing Joomla API...', '');
+      try {
+        const result = await window.leaderEmailSettings.testApi(currentSettings());
+        setMessage(result.message, result.ok ? 'ok' : 'error');
+      } catch (error) {
+        setMessage(`API test failed: ${error.message}`, 'error');
+      } finally {
+        button.disabled = false;
+      }
+    });
+
     document.getElementById('save').addEventListener('click', async () => {
-      await window.leaderEmailSettings.save({
-        enabled: fields.enabled.checked,
-        sendOnSubmit: fields.sendOnSubmit.checked,
-        sendOnPublish: fields.sendOnPublish.checked,
-        apiBaseUrl: fields.apiBaseUrl.value,
-        apiToken: fields.apiToken.value
-      });
+      await window.leaderEmailSettings.save(currentSettings());
       window.close();
     });
 

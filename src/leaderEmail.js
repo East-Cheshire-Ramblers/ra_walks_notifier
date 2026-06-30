@@ -53,6 +53,29 @@ async function lookupLeaderEmail(name, settings) {
   return email ? { email, record: candidates[0] } : { email: '', reason: 'matching profile has no email' };
 }
 
+async function testLeaderEmailApi(settings, name = 'Richard Higham') {
+  const normalized = normalizeLeaderEmailSettings({ leaderEmails: settings || {} });
+  const searchName = String(name || '').replace(/\s+/g, ' ').trim();
+  if (!normalized.apiBaseUrl || !normalized.apiToken) {
+    return { ok: false, message: 'Enter the Joomla API URL and token first.' };
+  }
+  if (!searchName) {
+    return { ok: false, message: 'Enter a leader name to test.' };
+  }
+
+  try {
+    const lookup = await lookupLeaderEmail(searchName, normalized);
+    if (!lookup.email) {
+      return { ok: false, message: `API connected, but ${lookup.reason} for ${searchName}.` };
+    }
+
+    const profileName = lookup.record?.attributes?.preferred_name || searchName;
+    return { ok: true, message: `API connected. Found ${profileName} <${lookup.email}>.` };
+  } catch (error) {
+    return { ok: false, message: `API test failed: ${error.message}` };
+  }
+}
+
 function submittedSubject(walk) {
   return `Thank you for submitting ${walk.title}`;
 }
@@ -205,6 +228,7 @@ module.exports = {
   normalizeLeaderEmailSettings,
   leaderEmailConfigured,
   lookupLeaderEmail,
+  testLeaderEmailApi,
   sendLeaderEmails,
   shouldSendSubmitted,
   shouldSendPublished,
