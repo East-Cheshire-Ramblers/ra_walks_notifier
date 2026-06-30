@@ -1,10 +1,12 @@
 #!/usr/bin/env bash
 set -euo pipefail
-APP_ZIP=$(ls -t dist/*.zip 2>/dev/null | head -1 || true)
-DMG=$(ls -t dist/*.dmg 2>/dev/null | head -1 || true)
+
+VERSION=$(node -p "require('./package.json').version")
+APP_ZIP=$(ls -t "dist/"*"$VERSION"*.zip 2>/dev/null | head -1 || true)
+DMG=$(ls -t "dist/"*"$VERSION"*.dmg 2>/dev/null | head -1 || true)
 TARGET="${DMG:-$APP_ZIP}"
 if [ -z "$TARGET" ]; then
-  echo "No built .dmg or .zip found in dist/. Run npm run build:mac:signed first."
+  echo "No built .dmg or .zip for version $VERSION found in dist/. Run npm run build:mac:signed first."
   exit 1
 fi
 xcrun notarytool submit "$TARGET" --keychain-profile WalksManagerWatchNotary --wait
