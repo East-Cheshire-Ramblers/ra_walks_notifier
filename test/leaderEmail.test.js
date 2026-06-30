@@ -5,7 +5,8 @@ const {
   leaderEmailConfigured,
   shouldSendSubmitted,
   shouldSendPublished,
-  lookupLeaderEmail
+  lookupLeaderEmail,
+  isAllowedTestLeaderEmail
 } = require('../src/leaderEmail');
 
 test('leader email settings default to enabled but require API details', () => {
@@ -100,4 +101,13 @@ test('lookupLeaderEmail refuses ambiguous matches', async () => {
   } finally {
     global.fetch = originalFetch;
   }
+});
+
+test('leader email test gate only allows the configured test leader', () => {
+  assert.equal(isAllowedTestLeaderEmail('me@richyhigham.uk', {}), true);
+  assert.equal(isAllowedTestLeaderEmail('other.leader@example.org', {}), false);
+  assert.equal(
+    isAllowedTestLeaderEmail('other.leader@example.org', { testAllowedEmails: ['other.leader@example.org'] }),
+    true
+  );
 });

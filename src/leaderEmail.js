@@ -178,6 +178,12 @@ async function sendLeaderEmailForWalk(walk, settings, kind, bucket, result) {
       return;
     }
 
+    if (!isAllowedTestLeaderEmail(lookup.email, settings)) {
+      log(`Leader ${kind} email skipped for ${name}: ${lookup.email} is not in the test allow list.`);
+      result.skipped += 1;
+      return;
+    }
+
     if (kind === 'published') await sendLeaderPublishedEmail(walk, lookup.email);
     else await sendLeaderSubmittedEmail(walk, lookup.email);
 
@@ -190,11 +196,17 @@ async function sendLeaderEmailForWalk(walk, settings, kind, bucket, result) {
   }
 }
 
+function isAllowedTestLeaderEmail(email, settings) {
+  const allowed = settings.testAllowedEmails || ['me@richyhigham.uk'];
+  return allowed.map(value => String(value).trim().toLowerCase()).includes(String(email || '').trim().toLowerCase());
+}
+
 module.exports = {
   normalizeLeaderEmailSettings,
   leaderEmailConfigured,
   lookupLeaderEmail,
   sendLeaderEmails,
   shouldSendSubmitted,
-  shouldSendPublished
+  shouldSendPublished,
+  isAllowedTestLeaderEmail
 };
