@@ -1,0 +1,15 @@
+[Unit]
+Description=RA Walks Notifier API and scheduler
+After=network.target
+
+[Service]
+Type=simple
+User=richard
+WorkingDirectory=/home/richard/Documents/code/ra_walks_notifier
+ExecStart=/usr/bin/node src/server.js
+Restart=on-failure
+RestartSec=5
+EnvironmentFile=/home/richard/Documents/code/ra_walks_notifier/.env
+
+[Install]
+WantedBy=multi-user.target
