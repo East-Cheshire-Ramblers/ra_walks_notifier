@@ -229,9 +229,9 @@ async function refreshCache() {
   updateTrayLabel();
 }
 
-function startStatusPolling() {
+async function startStatusPolling() {
   if (statusPollTimer) clearInterval(statusPollTimer);
-  refreshCache();
+  await refreshCache();
   statusPollTimer = setInterval(refreshCache, statusPollIntervalMs);
 }
 
@@ -915,7 +915,7 @@ function buildMenu() {
   tray.setContextMenu(menu);
 }
 
-app.whenReady().then(() => {
+app.whenReady().then(async () => {
   if (app.dock) app.dock.setIcon(appIconPath());
   if (app.dock) app.dock.hide();
   configureUpdates();
@@ -923,7 +923,10 @@ app.whenReady().then(() => {
   tray = new Tray(trayIcon());
   tray.setToolTip('Walks Manager Watch');
   buildMenu();
-  startStatusPolling();
+  // Wait for the first cache fill before deciding whether setup is
+  // needed - otherwise isConfigured() runs against the empty initial
+  // cache on every launch and shows the connect window unnecessarily.
+  await startStatusPolling();
   if (!isConfigured()) {
     showConnectWindow();
   } else {
@@ -979,7 +982,10 @@ ipcMain.handle('connect:save-groups', async (_event, groups) => {
   return { groups: cachedGroups };
 });
 
-ipcMain.handle('recipients:load', async () => (cachedConfig || (await apiClient.getConfig())).notificationRecipients || []);
+ipcMain.handle('recipients:load', async () => {
+  cachedConfig = await apiClient.getConfig();
+  return cachedConfig.notificationRecipients || [];
+});
 ipcMain.handle('recipients:save', async (_event, text) => {
   const { parseRecipients } = require('./config');
   const recipients = parseRecipients(text);
@@ -989,8 +995,8 @@ ipcMain.handle('recipients:save', async (_event, text) => {
 });
 
 ipcMain.handle('schedule:load', async () => {
-  const cfg = cachedConfig || (await apiClient.getConfig());
-  return { checkIntervalMinutes: cfg.checkIntervalMinutes || 5, activeHours: cfg.activeHours || { start: 7, end: 22 } };
+  cachedConfig = await apiClient.getConfig();
+  return { checkIntervalMinutes: cachedConfig.checkIntervalMinutes || 5, activeHours: cachedConfig.activeHours || { start: 7, end: 22 } };
 });
 ipcMain.handle('schedule:save', async (_event, settings) => {
   const { normalizeSchedule } = require('./schedule');
@@ -1001,8 +1007,8 @@ ipcMain.handle('schedule:save', async (_event, settings) => {
 });
 
 ipcMain.handle('leader-email:load', async () => {
-  const cfg = cachedConfig || (await apiClient.getConfig());
-  return cfg.leaderEmails || {};
+  cachedConfig = await apiClient.getConfig();
+  return cachedConfig.leaderEmails || {};
 });
 ipcMain.handle('leader-email:save', async (_event, settings) => {
   cachedConfig = await apiClient.putConfig({ leaderEmails: settings });
