@@ -165,16 +165,17 @@
       }
       groupList.innerHTML = groups.map(group => `
         <label>
-          <input type="checkbox" value="${group.gid}" ${selectedGids.includes(group.gid) ? 'checked' : ''}>
+          <input type="radio" name="group" value="${group.gid}" ${selectedGids.includes(group.gid) ? 'checked' : ''}>
           ${group.name}
         </label>
       `).join('');
     }
 
     function selectedGroups(groups) {
-      return Array.from(groupList.querySelectorAll('input[type="checkbox"]:checked'))
-        .map(input => groups.find(group => String(group.gid) === input.value))
-        .filter(Boolean);
+      const checked = groupList.querySelector('input[type="radio"]:checked');
+      if (!checked) return [];
+      const match = groups.find(group => String(group.gid) === checked.value);
+      return match ? [match] : [];
     }
 
     let knownGroups = [];
