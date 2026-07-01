@@ -64,7 +64,7 @@ function includeBetaUpdates() {
 }
 
 function isBetaBuild() {
-  return /^4\.3\./.test(app.getVersion());
+  return /-beta(?:\.|$)/.test(app.getVersion());
 }
 
 function releaseChannelLabel() {
@@ -1337,6 +1337,7 @@ function buildMenu() {
         { type: 'separator' },
         { label: 'Manage Recipients', click: () => showRecipientsWindow() },
         { label: 'SMTP Settings', click: () => showSmtpWindow() },
+        ...(isBetaBuild() ? [{ label: 'Leader Email Settings', click: () => showLeaderEmailWindow() }] : []),
         { label: 'Check Schedule and Active Hours', click: () => showScheduleWindow() },
         { label: 'Refresh Walks Manager Login', click: () => openWalksManagerLoginWindow().then(result => {
           dialog.showMessageBox({
